@@ -1,187 +1,288 @@
 import os
 import json
 import requests
+import re
 from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
-# ===== CONFIG =====
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# =========================================================
+# CONFIGURACIÓN
+# =========================================================
+SCOPES = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = 'driveCredentials.json'
-FOLDER_ID = '1uz-MJd-7stYBuNF-fHyOBOhHof0xSYa-'
-OUTPUT_DIR = './docs'
-STATIC_IMG_DIR = './static/img'  # Carpeta de imágenes para Docusaurus
+ROOT_FOLDER_ID = '1uz-MJd-7stYBuNF-fHyOBOhHof0xSYa-'
+OUTPUT_DOCS_DIR = './docs'
+OUTPUT_STATIC_IMG_DIR = './static/img'
+IMAGE_CACHE_FILE = 'image_cache.json'
 
-# ===== AUTENTICACIÓN =====
-creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-service = build('drive', 'v3', credentials=creds)
+# =========================================================
+# AUTENTICACIÓN Y SERVICIO
+# =========================================================
+def get_drive_service():
+    """Configura y retorna el servicio de Google Drive."""
+    try:
+        creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        return build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"❌ Error de autenticación: {e}")
+        return None
 
-# ===== FUNCIONES =====
+# =========================================================
+# FUNCIONES AUXILIARES
+# =========================================================
+def ensure_directory(path):
+    """Crea un directorio si no existe."""
+    os.makedirs(path, exist_ok=True)
+
+def load_image_cache():
+    """Carga el registro de imágenes desde un archivo JSON."""
+    if os.path.exists(IMAGE_CACHE_FILE):
+        with open(IMAGE_CACHE_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_image_cache(cache):
+    """Guarda el registro de imágenes en un archivo JSON."""
+    with open(IMAGE_CACHE_FILE, 'w') as f:
+        json.dump(cache, f, indent=4)
+
 def download_image(url, local_path):
-    """Descarga imagen si no existe o cambió"""
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    if os.path.exists(local_path):
-        return  # No volver a descargar
-    r = requests.get(url)
-    if r.status_code == 200:
-        with open(local_path, "wb") as f:
-            f.write(r.content)
-        print(f"🖼 Guardada imagen: {local_path}")
+    """Descarga una imagen solo si no existe localmente."""
+    ensure_directory(os.path.dirname(local_path))
+    if not os.path.exists(local_path):
+        try:
+            r = requests.get(url, stream=True, timeout=10)
+            if r.status_code == 200:
+                with open(local_path, "wb") as f:
+                    for chunk in r.iter_content(1024):
+                        f.write(chunk)
+                print(f"🖼️ Guardada imagen: {local_path}")
+                return True
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error al descargar imagen de {url}: {e}")
+    return False
 
-def element_to_md(elem, img_subfolder):
-    """Convierte elemento HTML a Markdown"""
-    tag = elem.name.lower() if elem.name else ""
-    text = elem.get_text(strip=True)
-
-    # Encabezados
-    if tag in ["h1","h2","h3","h4","h5","h6"]:
-        return f"{'#' * int(tag[1])} {text}"
-
-    # Listas
-    if tag == "li":
-        parent = elem.find_parent(["ol","ul"])
-        prefix = "-" if parent.name == "ul" else f"{list(parent.find_all('li')).index(elem) + 1}."
-        return f"{prefix} {text}"
-
-    # Citas
-    if tag == "blockquote":
-        return "\n".join([f"> {line}" for line in text.splitlines()])
-
-    # Código
-    if tag == "code":
-        return f"```\n{text}\n```" if elem.find_parent("pre") else f"`{text}`"
-
-    # Párrafos
-    if tag == "p":
-        return text
-
-    # Formato
-    if tag in ["strong","b"]:
-        return f"**{text}**"
-    if tag in ["em","i"]:
-        return f"*{text}*"
-
-    # Links
-    if tag == "a":
-        return f"[{text}]({elem.get('href', '#')})"
-
-    # Imágenes
-    if tag == "img":
-        src = elem.get("src", "")
-        alt = elem.get("alt", "")
-        img_name = os.path.basename(src.split("=")[0]) + ".png"
-        local_img_path = os.path.join(STATIC_IMG_DIR, img_subfolder, img_name)
-        download_image(src, local_img_path)
-        return f"![{alt}](/img/{img_subfolder}/{img_name})"
-
-    return text
-
-def html_to_md(html_data, img_subfolder):
-    """Convierte HTML a Markdown"""
-    soup = BeautifulSoup(html_data, "lxml")
-    md_lines = []
-
-    for elem in soup.find_all([
-        "h1","h2","h3","h4","h5","h6",
-        "p","strong","em","b","i",
-        "ol","ul","li",
-        "blockquote","code","pre",
-        "a","img","table","tr","th","td"
-    ], recursive=True):
-
-        # Tablas → Markdown
-        if elem.name == "table":
-            rows = elem.find_all("tr")
-            if rows:
-                headers = [cell.get_text(strip=True) for cell in rows[0].find_all(["th","td"])]
-                md_lines.append("| " + " | ".join(headers) + " |")
-                md_lines.append("| " + " | ".join(["---"] * len(headers)) + " |")
-                for row in rows[1:]:
-                    cells = [cell.get_text(strip=True) for cell in row.find_all(["th","td"])]
-                    md_lines.append("| " + " | ".join(cells) + " |")
-            continue
-
-        md_text = element_to_md(elem, img_subfolder)
-        if md_text:
-            md_lines.append(md_text)
-
-    return "\n\n".join(md_lines)
-
-def get_drive_path(file_id):
-    """Ruta desde carpeta raíz"""
-    path_parts = []
-    current_id = file_id
-    while True:
-        file = service.files().get(fileId=current_id, fields="id, name, parents").execute()
-        if 'parents' not in file:
-            break
-        parent_id = file['parents'][0]
-        if parent_id == FOLDER_ID:
-            break
-        parent_file = service.files().get(fileId=parent_id, fields="id, name, parents").execute()
-        path_parts.insert(0, parent_file['name'])
-        current_id = parent_file['id']
-    return path_parts
-
-def ensure_category_json(folder_path, label):
-    """Crea _category_.json"""
+def create_category_json(folder_path, label):
+    """Crea o actualiza _category_.json solo si hay cambios."""
     path_json = os.path.join(folder_path, "_category_.json")
-    if not os.path.exists(path_json):
-        data = {
-            "label": label,
-            "position": 0,
-            "link": {
-                "type": "generated-index",
-                "description": f"Sección: {label}"
-            }
+    
+    new_data = {
+        "label": label,
+        "position": 0,
+        "link": {
+            "type": "generated-index",
+            "description": f"Contenido de {label}"
         }
-        with open(path_json, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"📁 Creado _category_.json en {folder_path}")
+    }
+    
+    if os.path.exists(path_json):
+        with open(path_json, 'r', encoding='utf-8') as f:
+            try:
+                current_data = json.load(f)
+                if current_data == new_data:
+                    print(f"⚡ Sin cambios en _category_.json en {folder_path}")
+                    return
+            except json.JSONDecodeError:
+                pass
 
-def save_if_changed(path, content):
-    """Solo guarda si hay cambios"""
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
+    with open(path_json, "w", encoding="utf-8") as f:
+        json.dump(new_data, f, indent=2, ensure_ascii=False)
+    print(f"📁 Creado/Actualizado _category_.json en {folder_path}")
+
+def save_if_changed(file_path, content):
+    """Guarda el archivo solo si su contenido ha cambiado."""
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
             if f.read().strip() == content.strip():
-                print(f"⚡ Sin cambios: {path}")
+                print(f"⚡ Sin cambios: {file_path}")
                 return False
-    with open(path, "w", encoding="utf-8") as f:
+    
+    ensure_directory(os.path.dirname(file_path))
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
-    print(f"✅ Guardado: {path}")
+    print(f"✅ Guardado: {file_path}")
     return True
 
-def process_folder(folder_id):
-    results = service.files().list(
-        q=f"'{folder_id}' in parents",
-        fields="files(id, name, mimeType)"
-    ).execute()
+# =========================================================
+# CONVERSIÓN DE HTML A MDX
+# =========================================================
+def convert_to_mdx(element, img_subfolder, image_cache):
+    """Convierte un elemento HTML y sus hijos a MDX, gestionando el registro de imágenes."""
+    md_content = ""
+    if element.name is None:
+        return element.string if element.string else ""
+    
+    # Manejar elementos de bloque
+    if element.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+        text = element.get_text(strip=True)
+        return f"{'#' * int(element.name[1])} {text}\n"
+    elif element.name == "p":
+        content = "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
+        return f"{content}\n"
+    elif element.name == "blockquote":
+        text = element.get_text(strip=True)
+        return f"> {text}\n"
+    elif element.name in ["ul", "ol"]:
+        list_items = ""
+        for li in element.find_all("li", recursive=False):
+            prefix = "- " if element.name == "ul" else f"{element.find_all('li', recursive=False).index(li) + 1}. "
+            list_items += f"{prefix}{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in li.children])}\n"
+        return list_items
+    elif element.name == "table":
+        return process_table(element)
+    elif element.name == "img":
+        src = element.get("src", "")
+        alt = element.get("alt", "")
+        
+        if src in image_cache:
+            img_name = image_cache[src]
+            print(f"⚡ Imagen ya en caché: {img_name}")
+        else:
+            img_hash = abs(hash(src)) % (10**8)
+            img_name = f"img_{img_hash}.png"
+            local_img_path = os.path.join(OUTPUT_STATIC_IMG_DIR, img_subfolder, img_name)
+            download_image(src, local_img_path)
+            image_cache[src] = img_name
+        
+        return f"![{alt}](/img/{img_subfolder}/{img_name})\n"
+    
+    # Manejar elementos de texto en línea
+    elif element.name == "a":
+        text = element.get_text(strip=True)
+        url = element.get('href', '#')
+        return f"[{text}]({url})"
+    elif element.name in ["strong", "b"]:
+        return f"**{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])}**"
+    elif element.name in ["em", "i"]:
+        return f"*_{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])}_*"
+    elif element.name == "span" and element.has_attr("style"):
+        color_code_match = re.search(r"color:\s*([^;]+)", element["style"])
+        if color_code_match:
+            color_code = color_code_match.group(1).strip()
+            content = "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
+            return f"<ColorText color=\"{color_code}\">{content}</ColorText>"
+    
+    # Si el elemento no es reconocido, procesar sus hijos
+    return "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
+
+def process_table(table_tag):
+    """Convierte una tabla HTML a Markdown."""
+    rows = table_tag.find_all("tr")
+    if not rows:
+        return ""
+    
+    md_lines = []
+    
+    headers = [cell.get_text(strip=True) for cell in rows[0].find_all(["th", "td"])]
+    md_lines.append("| " + " | ".join(headers) + " |")
+    md_lines.append("| " + " | ".join(["---"] * len(headers)) + " |")
+    
+    for row in rows[1:]:
+        cells = [cell.get_text(strip=True) for cell in row.find_all(["th", "td"])]
+        md_lines.append("| " + " | ".join(cells) + " |")
+        
+    return "\n".join(md_lines) + "\n"
+
+def convert_html_to_mdx_final(html_data, img_subfolder, image_cache):
+    """Punto de entrada principal para la conversión de HTML a MDX."""
+    soup = BeautifulSoup(html_data, "lxml")
+    mdx_content_parts = []
+    
+    for element in soup.body.find_all(True, recursive=False):
+        mdx_content = convert_to_mdx(element, img_subfolder, image_cache)
+        if mdx_content:
+            mdx_content_parts.append(mdx_content)
+            
+    return "\n".join(mdx_content_parts)
+
+# =========================================================
+# PROCESAMIENTO DE ARCHIVOS EN GOOGLE DRIVE
+# =========================================================
+def process_drive_folder(service, folder_id, path_parts=[]):
+    """Recorre de forma recursiva una carpeta de Google Drive, con soporte para .docx."""
+    image_cache = load_image_cache()
+    try:
+        results = service.files().list(
+            q=f"'{folder_id}' in parents and trashed=false",
+            fields="files(id, name, mimeType)"
+        ).execute()
+    except Exception as e:
+        print(f"❌ Error al listar archivos de la carpeta {folder_id}: {e}")
+        return
 
     for item in results.get('files', []):
-        if item['mimeType'] == 'application/vnd.google-apps.folder':
-            sub_path = get_drive_path(item['id'])
-            local_folder = os.path.join(OUTPUT_DIR, *sub_path, item['name'])
-            os.makedirs(local_folder, exist_ok=True)
-            ensure_category_json(local_folder, item['name'])
-            process_folder(item['id'])
-        elif item['mimeType'] == 'application/vnd.google-apps.document':
-            drive_path = get_drive_path(item['id'])
-            local_folder = os.path.join(OUTPUT_DIR, *drive_path)
-            os.makedirs(local_folder, exist_ok=True)
-            if drive_path:
-                ensure_category_json(local_folder, drive_path[-1])
+        item_name = item['name']
+        item_mime = item['mimeType']
+        item_id = item['id']
+        
+        if item_mime == 'application/vnd.google-apps.folder':
+            current_path = os.path.join(OUTPUT_DOCS_DIR, *path_parts, item_name)
+            ensure_directory(current_path)
+            create_category_json(current_path, item_name)
+            process_drive_folder(service, item_id, path_parts + [item_name])
+            
+        elif item_mime in ['application/vnd.google-apps.document', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+            
+            doc_id_to_process = item_id
+            
+            # Convierte .docx a Google Doc si es necesario
+            if item_mime == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                try:
+                    print(f"🔄 Convirtiendo .docx a Google Doc: {item_name}")
+                    converted_file = service.files().copy(
+                        fileId=item_id,
+                        body={'name': item_name, 'mimeType': 'application/vnd.google-apps.document'}
+                    ).execute()
+                    doc_id_to_process = converted_file['id']
+                except Exception as e:
+                    print(f"❌ Error al convertir .docx {item_name}: {e}")
+                    continue
 
-            safe_name = item['name'].replace(" ", "_")
-            md_path = os.path.join(local_folder, f"{safe_name}.md")
-            img_subfolder = "/".join([*drive_path, safe_name])
+            doc_path = os.path.join(OUTPUT_DOCS_DIR, *path_parts)
+            ensure_directory(doc_path)
+            
+            safe_name = item_name.replace(" ", "-").replace("/", "-").lower()
+            if safe_name.endswith('.docx'):
+                safe_name = safe_name.replace('.docx', '')
+            
+            mdx_path = os.path.join(doc_path, f"{safe_name}.mdx")
+            img_subfolder = "/".join(path_parts + [safe_name])
 
-            print(f"⬇ Descargando: {item['name']}")
-            html_data = service.files().export(fileId=item['id'], mimeType='text/html').execute()
-            md_content = html_to_md(html_data, img_subfolder)
-            save_if_changed(md_path, md_content)
+            try:
+                print(f"⬇️ Descargando documento: {item_name}")
+                html_data = service.files().export(fileId=doc_id_to_process, mimeType='text/html').execute()
+                mdx_content = convert_html_to_mdx_final(html_data, img_subfolder, image_cache)
+                
+                frontmatter = f"""---
+title: {item_name}
+sidebar_position: 1
+---
 
-# ===== INICIO =====
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-ensure_category_json(OUTPUT_DIR, "Documentación")
-process_folder(FOLDER_ID)
-print("🎉 Conversión completa con imágenes.")
+import ColorText from '@site/src/components/ColorText';
+
+"""
+                save_if_changed(mdx_path, frontmatter + mdx_content)
+            except Exception as e:
+                print(f"❌ Error al procesar documento {item_name}: {e}")
+            
+            # Elimina el archivo temporal de Google Doc si fue creado
+            if item_mime == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                 try:
+                    service.files().delete(fileId=doc_id_to_process).execute()
+                    print(f"🗑️ Eliminado archivo temporal de Google Doc para {item_name}")
+                 except Exception as e:
+                    print(f"⚠️ No se pudo eliminar el archivo temporal para {item_name}: {e}")
+
+    save_image_cache(image_cache)
+# =========================================================
+# INICIO DEL SCRIPT
+# =========================================================
+if __name__ == "__main__":
+    drive_service = get_drive_service()
+    if drive_service:
+        ensure_directory(OUTPUT_DOCS_DIR)
+        create_category_json(OUTPUT_DOCS_DIR, "Revista del Colegio")
+        print("🚀 Iniciando sincronización de Google Drive a Docusaurus...")
+        process_drive_folder(drive_service, ROOT_FOLDER_ID)
+        print("🎉 Conversión y sincronización completa.")
