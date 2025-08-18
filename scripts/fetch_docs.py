@@ -107,30 +107,33 @@ def save_if_changed(file_path, content):
 # =========================================================
 # CONVERSIÓN DE HTML A MDX
 # =========================================================
+
 def convert_to_mdx(element, img_subfolder, image_cache):
     """Convierte un elemento HTML y sus hijos a MDX, gestionando el registro de imágenes."""
-    md_content = ""
     if element.name is None:
-        return element.string if element.string else ""
-    
+        # Respetar saltos de línea explícitos en el texto
+        return element.string.replace("\n", "\n\n") if element.string else ""
+
     # Manejar elementos de bloque
     if element.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
         text = element.get_text(strip=True)
-        return f"{'#' * int(element.name[1])} {text}\n"
+        return f"{'#' * int(element.name[1])} {text}\n\n"
     elif element.name == "p":
         content = "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
-        return f"{content}\n"
+        return f"{content}\n\n"
+    elif element.name == "br":
+        return "\n"
     elif element.name == "blockquote":
         text = element.get_text(strip=True)
-        return f"> {text}\n"
+        return f"> {text}\n\n"
     elif element.name in ["ul", "ol"]:
         list_items = ""
-        for li in element.find_all("li", recursive=False):
-            prefix = "- " if element.name == "ul" else f"{element.find_all('li', recursive=False).index(li) + 1}. "
+        for idx, li in enumerate(element.find_all("li", recursive=False), start=1):
+            prefix = "- " if element.name == "ul" else f"{idx}. "
             list_items += f"{prefix}{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in li.children])}\n"
-        return list_items
+        return list_items + "\n"
     elif element.name == "table":
-        return process_table(element)
+        return process_table(element) + "\n"
     elif element.name == "img":
         src = element.get("src", "")
         alt = element.get("alt", "")
@@ -145,26 +148,38 @@ def convert_to_mdx(element, img_subfolder, image_cache):
             download_image(src, local_img_path)
             image_cache[src] = img_name
         
-        return f"![{alt}](/img/{img_subfolder}/{img_name})\n"
+        return f"![{alt}](/img/{img_subfolder}/{img_name})\n\n"
     
     # Manejar elementos de texto en línea
     elif element.name == "a":
-        text = element.get_text(strip=True)
         url = element.get('href', '#')
+        
+        # === INICIO DE LA MEJORA PARA YOUTUBE ===
+        youtube_pattern = re.compile(r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})')
+        match = youtube_pattern.search(url)
+        
+        if match:
+            video_id = match.group(1)
+            # Retorna el componente VideoPlayer en lugar del enlace
+            return f"<VideoPlayer src=\"{video_id}\" />\n\n"
+        # === FIN DE LA MEJORA PARA YOUTUBE ===
+
+        text = element.get_text(strip=True)
         return f"[{text}]({url})"
     elif element.name in ["strong", "b"]:
         return f"**{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])}**"
     elif element.name in ["em", "i"]:
-        return f"*_{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])}_*"
+        return f"*{''.join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])}*"
     elif element.name == "span" and element.has_attr("style"):
         color_code_match = re.search(r"color:\s*([^;]+)", element["style"])
         if color_code_match:
             color_code = color_code_match.group(1).strip()
             content = "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
             return f"<ColorText color=\"{color_code}\">{content}</ColorText>"
-    
+
     # Si el elemento no es reconocido, procesar sus hijos
     return "".join([convert_to_mdx(child, img_subfolder, image_cache) for child in element.children])
+
 
 def process_table(table_tag):
     """Convierte una tabla HTML a Markdown."""
@@ -254,14 +269,18 @@ def process_drive_folder(service, folder_id, path_parts=[]):
                 html_data = service.files().export(fileId=doc_id_to_process, mimeType='text/html').execute()
                 mdx_content = convert_html_to_mdx_final(html_data, img_subfolder, image_cache)
                 
+                # === INICIO DE LA MEJORA DEL FRONTMATTER ===
                 frontmatter = f"""---
 title: {item_name}
 sidebar_position: 1
 ---
 
 import ColorText from '@site/src/components/ColorText';
+import VideoPlayer from '@site/src/components/VideoPlayer';
 
 """
+                # === FIN DE LA MEJORA DEL FRONTMATTER ===
+
                 save_if_changed(mdx_path, frontmatter + mdx_content)
             except Exception as e:
                 print(f"❌ Error al procesar documento {item_name}: {e}")
