@@ -4,38 +4,19 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 ## Installation
 
-```bash
-yarn
-```
+- `npm i` for docusaurus
 
-## Local Development
+- `pip i -r requeriments.txt` for python scripts (first create an env)
 
-```bash
-yarn start
-```
+> linux env: python -m venv .venv -> source .venv/bin/activate
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+## Run proyect
 
-## Build
+### Page
 
-```bash
-yarn build
-```
+- npm start (develop)
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+### Scripts
 
-## Deployment
+- python scripts/fetch_docs.py
 
-Using SSH:
-
-```bash
-USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
