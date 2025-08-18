@@ -18,5 +18,4 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 ### Scripts
 
-- python scripts/fetch_docs.py
-
+- python scripts/fetch_docs.py (u need a credentials json file)
