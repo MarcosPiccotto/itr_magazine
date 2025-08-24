@@ -1,49 +1,37 @@
 import clsx from 'clsx';
-import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 
-const FeatureList = [
+const CardList = [
   {
     title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-    description: (
-      <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
-      </>
-    ),
+    image: '/img/card1.jpg',
+    description: 'Nuestra plataforma fue diseñada para que cualquier estudiante pueda usarla sin complicaciones.',
+    link: '/docs/intro',
   },
   {
     title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-    description: (
-      <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
-      </>
-    ),
+    image: '/img/card2.jpg',
+    description: 'Enfocate en tus aprendizajes, nosotros nos ocupamos de la organización y soporte.',
+    link: '/docs/intro',
   },
   {
     title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
-    description: (
-      <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
-      </>
-    ),
+    image: '/img/card3.jpg',
+    description: 'Construido con React, lo que permite expandir la revista con facilidad y rapidez.',
+    link: '/docs/intro',
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Card({title, image, description, link}) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as="h3">{title}</Heading>
-        <p>{description}</p>
+      <div className={styles.card}>
+        <img src={image} alt={title} className={styles.cardImage} />
+        <div className={styles.cardBody}>
+          <h3>{title}</h3>
+          <p>{description}</p>
+          <a href={link} className={styles.cardButton}>Ver más</a>
+        </div>
       </div>
     </div>
   );
@@ -54,8 +42,8 @@ export default function HomepageFeatures() {
     <section className={styles.features}>
       <div className="container">
         <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
+          {CardList.map((props, idx) => (
+            <Card key={idx} {...props} />
           ))}
         </div>
       </div>
