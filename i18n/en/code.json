@@ -330,5 +330,23 @@
   },
   "Presioname para ver 👀": {
     "message": "Press me to see 👀"
+  },
+  "Fácil de usar": {
+    "message": "Easy to use"
+  },
+  "Nuestra plataforma fue diseñada para que cualquier estudiante pueda usarla sin complicaciones.": {
+    "message": "Our platform was designed to be easy for any student to use."
+  },
+  "Concentrate en lo que importa": {
+    "message": "Focus on what matters"
+  },
+  "Enfocate en tus aprendizajes, nosotros nos ocupamos de la organización y soporte.": {
+    "message": "Focus on your learning, we'll take care of the organization and support."
+  },
+  "Construido con React": {
+    "message": "Powered by React"
+  },
+  "Utilizamos una plataforma robusta, lo que permite expandir la revista con facilidad y rapidez.": {
+    "message": "We use a robust platform, allowing the magazine to expand quickly and easily."
   }
 }

@@ -1,23 +1,24 @@
 import clsx from 'clsx';
 import styles from './styles.module.css';
+import Translate from '@docusaurus/Translate';
 
 const CardList = [
   {
-    title: 'Easy to Use',
+    title: <Translate>Fácil de usar</Translate>,
     image: '/img/card1.jpg',
-    description: 'Nuestra plataforma fue diseñada para que cualquier estudiante pueda usarla sin complicaciones.',
+    description: <Translate>Nuestra plataforma fue diseñada para que cualquier estudiante pueda usarla sin complicaciones.</Translate>,
     link: '/docs/intro',
   },
   {
-    title: 'Focus on What Matters',
+    title: <Translate>Concentrate en lo que importa</Translate>,
     image: '/img/card2.jpg',
-    description: 'Enfocate en tus aprendizajes, nosotros nos ocupamos de la organización y soporte.',
+    description: <Translate>Enfocate en tus aprendizajes, nosotros nos ocupamos de la organización y soporte.</Translate>,
     link: '/docs/intro',
   },
   {
-    title: 'Powered by React',
+    title: <Translate>Construido con React</Translate>,
     image: '/img/card3.jpg',
-    description: 'Construido con React, lo que permite expandir la revista con facilidad y rapidez.',
+    description: <Translate>Utilizamos una plataforma robusta, lo que permite expandir la revista con facilidad y rapidez.</Translate>,
     link: '/docs/intro',
   },
 ];
