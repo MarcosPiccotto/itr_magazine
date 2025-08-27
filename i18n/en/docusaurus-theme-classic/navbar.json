@@ -1,0 +1,26 @@
+{
+  "title": {
+    "message": "ITR Magazine",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "ITR Magazine Logo",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Publicaciones": {
+    "message": "Posts",
+    "description": "Navbar item with label Publicaciones"
+  },
+  "item.label.Blog": {
+    "message": "Blog",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.Proyecto": {
+    "message": "Proyect",
+    "description": "Navbar item with label Proyecto"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

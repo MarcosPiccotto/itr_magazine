@@ -9,6 +9,7 @@ SERVICE_ACCOUNT_FILE = 'driveCredentials.json'
 ROOT_FOLDER_ID = '1uz-MJd-7stYBuNF-fHyOBOhHof0xSYa-'
 OUTPUT_DOCS_DIR = './docs'
 OUTPUT_STATIC_IMG_DIR = './static/img'
+OUTPUT_TRANSLATED_DIR = 'i18n/en/docusaurus-plugin-content-docs/current' 
 IMAGE_CACHE_FILE = 'image_cache.json'
 
 # =========================================================
@@ -29,6 +30,7 @@ if __name__ == "__main__":
             ROOT_FOLDER_ID,
             OUTPUT_DOCS_DIR,
             OUTPUT_STATIC_IMG_DIR,
+            OUTPUT_TRANSLATED_DIR,
             IMAGE_CACHE_FILE
         )
         print("🎉 Conversión y sincronización completa.")

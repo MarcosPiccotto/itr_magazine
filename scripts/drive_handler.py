@@ -74,7 +74,11 @@ def download_image_utility(url, local_path):
             print(f"❌ Error al descargar imagen de {url}: {e}")
     return False
 
-def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_dir, image_cache_file, path_parts=[]):
+def detect_language_from_name(name):
+    base, ext = os.path.splitext(name)
+    return "en" if base.endswith("_en") else "es"
+
+def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_dir, output_translated_dir, image_cache_file, path_parts=[]):
     """Recorre de forma recursiva una carpeta de Google Drive, con soporte para .docx."""
     image_cache = load_image_cache(image_cache_file)
     try:
@@ -90,6 +94,7 @@ def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_
         item_name = item['name']
         item_mime = item['mimeType']
         item_id = item['id']
+        item_lang = detect_language_from_name(item_name)
         
         if item_mime == 'application/vnd.google-apps.folder':
             current_path = os.path.join(output_docs_dir, *path_parts, item_name)
@@ -113,12 +118,15 @@ def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_
                     print(f"❌ Error al convertir .docx {item_name}: {e}")
                     continue
 
-            doc_path = os.path.join(output_docs_dir, *path_parts)
+            output_dir = output_docs_dir if item_lang == 'es' else output_translated_dir
+            doc_path = os.path.join(output_dir, *path_parts)
             ensure_directory(doc_path)
             
             safe_name = item_name.replace(" ", "-").replace("/", "-").lower()
             if safe_name.endswith('.docx'):
                 safe_name = safe_name.replace('.docx', '')
+            if safe_name.endswith('_en'):
+                safe_name = safe_name[:-3]
             
             mdx_path = os.path.join(doc_path, f"{safe_name}.mdx")
             img_subfolder = "/".join(path_parts + [safe_name])
@@ -145,9 +153,10 @@ def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_
                 # Se formatea la fecha a YYYY-MM-DD
                 date_iso = datetime.fromisoformat(item['modifiedTime'].replace("Z", "+00:00"))
                 formatted_date = date_iso.strftime('%Y-%m-%d')
+                item_title = item_name if item_lang == 'es' else item_name[:-3]
                         
                 frontmatter = f"""---
-title: "{item_name}"
+title: "{item_title}"
 description: "{doc_sample}"
 date: '{formatted_date}'
 sidebar_position: 1
