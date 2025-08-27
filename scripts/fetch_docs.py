@@ -13,6 +13,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = 'driveCredentials.json'
 ROOT_FOLDER_ID = '1uz-MJd-7stYBuNF-fHyOBOhHof0xSYa-'
 OUTPUT_DOCS_DIR = './docs'
+OUTPUT_TRANSLATED_DIR = 'i18n/en/docusaurus-plugin-content-docs/current' 
 OUTPUT_STATIC_IMG_DIR = './static/img'
 IMAGE_CACHE_FILE = 'image_cache.json'
 
@@ -103,6 +104,10 @@ def save_if_changed(file_path, content):
         f.write(content)
     print(f"✅ Guardado: {file_path}")
     return True
+
+def detect_language_from_name(name):
+    base, ext = os.path.splitext(name)
+    return "en" if base.endswith("_en") else "es"
 
 # =========================================================
 # CONVERSIÓN DE HTML A MDX
@@ -230,6 +235,7 @@ def process_drive_folder(service, folder_id, path_parts=[]):
         item_name = item['name']
         item_mime = item['mimeType']
         item_id = item['id']
+        item_lang = detect_language_from_name(item_name)
         
         if item_mime == 'application/vnd.google-apps.folder':
             current_path = os.path.join(OUTPUT_DOCS_DIR, *path_parts, item_name)
@@ -254,12 +260,15 @@ def process_drive_folder(service, folder_id, path_parts=[]):
                     print(f"❌ Error al convertir .docx {item_name}: {e}")
                     continue
 
-            doc_path = os.path.join(OUTPUT_DOCS_DIR, *path_parts)
+            output_dir = OUTPUT_DOCS_DIR if item_lang == 'es' else OUTPUT_TRANSLATED_DIR
+            doc_path = os.path.join(output_dir, *path_parts)
             ensure_directory(doc_path)
             
             safe_name = item_name.replace(" ", "-").replace("/", "-").lower()
             if safe_name.endswith('.docx'):
                 safe_name = safe_name.replace('.docx', '')
+            if safe_name.endswith('_en'):
+                safe_name = safe_name[:-3]
             
             mdx_path = os.path.join(doc_path, f"{safe_name}.mdx")
             img_subfolder = "/".join(path_parts + [safe_name])
@@ -301,6 +310,7 @@ if __name__ == "__main__":
     drive_service = get_drive_service()
     if drive_service:
         ensure_directory(OUTPUT_DOCS_DIR)
+        ensure_directory(OUTPUT_TRANSLATED_DIR)
         create_category_json(OUTPUT_DOCS_DIR, "Revista del Colegio")
         print("🚀 Iniciando sincronización de Google Drive a Docusaurus...")
         process_drive_folder(drive_service, ROOT_FOLDER_ID)

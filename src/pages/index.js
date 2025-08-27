@@ -13,14 +13,19 @@ function HomepageHeader() {
     <header className={clsx('hero hero--primary heroBanner', styles.heroBanner)}>
       <div className="container">
         <Heading as="h1" className="hero__title">
-          {siteConfig.title}
+          <Translate>Revista ITR</Translate>
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          <Translate>
+            “El talento de nuestros estudiantes, en un solo lugar”
+          </Translate>
+        </p>
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/intro">
-            Presioname para ver 👀
+            to="/docs/hola"
+          >
+            <Translate>Presioname para ver 👀</Translate>
           </Link>
         </div>
       </div>
