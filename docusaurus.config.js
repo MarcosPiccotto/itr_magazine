@@ -4,7 +4,7 @@
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
-import {themes as prismThemes} from 'prism-react-renderer';
+import { themes as prismThemes } from 'prism-react-renderer';
 
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -39,7 +39,7 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en','es'],
+    locales: ['en', 'es'],
   },
 
   presets: [
@@ -68,6 +68,10 @@ const config = {
     ],
   ],
 
+  plugins: [
+    require.resolve('./plugins/docs-global-data'), // <-- VERIFICA ESTA LÍNEA
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -87,8 +91,8 @@ const config = {
             position: 'left',
             label: 'Publicaciones',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
-          {to: '/blog', label: 'Proyecto', position: 'left'},
+          { to: '/blog', label: 'Blog', position: 'left' },
+          { to: '/blog', label: 'Proyecto', position: 'left' },
           {
             href: 'https://github.com/MarcosPiccotto/itr_magazine ',
             label: 'GitHub',
@@ -96,9 +100,9 @@ const config = {
           },
         ],
       },
-      
+
       footer: {
-        style: 'dark' ,
+        style: 'dark',
         copyright: `
           <div style="text-align: center; ">
             <p>© 2025 Colegio ITR | Revista Digital</p>
@@ -107,7 +111,7 @@ const config = {
           </div>
         `,
       }
-  
+
 
       // ,
       // footer: {

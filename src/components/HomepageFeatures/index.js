@@ -1,52 +1,61 @@
+import React from 'react';
 import clsx from 'clsx';
-import styles from './styles.module.css';
+import Link from '@docusaurus/Link';
+import { usePluginData } from '@docusaurus/useGlobalData';
+import styles from './styles.module.css'; // Asegúrate de tener un archivo de estilos o ajústalo
 
-const CardList = [
-  {
-    title: 'Easy to Use',
-    image: '/img/card1.jpg',
-    description: 'Nuestra plataforma fue diseñada para que cualquier estudiante pueda usarla sin complicaciones.',
-    link: '/docs/intro',
-  },
-  {
-    title: 'Focus on What Matters',
-    image: '/img/card2.jpg',
-    description: 'Enfocate en tus aprendizajes, nosotros nos ocupamos de la organización y soporte.',
-    link: '/docs/intro',
-  },
-  {
-    title: 'Powered by React',
-    image: '/img/card3.jpg',
-    description: 'Construido con React, lo que permite expandir la revista con facilidad y rapidez.',
-    link: '/docs/intro',
-  },
-];
-
-function Card({title, image, description, link}) {
-  return (
-    <div className={clsx('col col--4')}>
-      <div className={styles.card}>
-        <img src={image} alt={title} className={styles.cardImage} />
-        <div className={styles.cardBody}>
-          <h3>{title}</h3>
-          <p>{description}</p>
-          <a href={link} className={styles.cardButton}>Ver más</a>
+// --- Componente de Tarjeta Individual ---
+function Card({ title, image, description, link }) {
+    return (
+        <div className={clsx('col col--4')}>
+            <div className={styles.card}>
+                {/* Usamos require() para que Docusaurus maneje la imagen */}
+                {image ?
+                <img src={require(`@site/static/img/${image}`).default}alt={title} className={styles.cardImage} />
+                :
+                <img src="/img/fondo_principal.png" alt={title} className={styles.cardImage} />
+                }
+                <div className={styles.cardBody}>
+                    <h3>{title}</h3>
+                    <p>{description}</p>
+                    {/* Es mejor usar Link para la navegación interna */}
+                    <Link to={link} className={styles.cardButton}>Ver más</Link>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
-export default function HomepageFeatures() {
-  return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {CardList.map((props, idx) => (
-            <Card key={idx} {...props} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+// --- Componente Principal que Muestra las Tarjetas ---
+export default function PublicationCards() {
+    const latestDocs = usePluginData('docusaurus-plugin-docs-global-data');
+
+    if (!latestDocs || latestDocs.length === 0) {
+        return (
+            <section style={{ textAlign: 'center', padding: '4rem 0' }}>
+                <h2>Últimas Publicaciones</h2>
+                <p>No se encontraron publicaciones recientes.</p>
+            </section>
+        );
+    }
+
+    return (
+        <section className={styles.features}>
+            <div className="container">
+                <div className="row">
+                    {latestDocs.map((doc) => {
+                        console.log(doc)
+                        return <Card
+                            key={doc.permalink}
+                            title={doc.title}
+                            description={doc.description}
+                            image={doc.image}
+                            link={doc.permalink}
+                        />
+                    }
+                    )}
+                </div>
+            </div>
+        </section>
+    );
 }
