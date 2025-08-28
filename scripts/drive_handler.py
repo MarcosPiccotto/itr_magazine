@@ -72,11 +72,12 @@ def download_image_utility(url, local_path):
                 return True
         except requests.exceptions.RequestException as e:
             print(f"❌ Error al descargar imagen de {url}: {e}")
-    return False
+    return True
 
 def detect_language_from_name(name):
     base, ext = os.path.splitext(name)
-    return "en" if base.endswith("_en") else "es"
+    parts = base.split("_")
+    return "en" if "en" in parts else "es"
 
 def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_dir, output_translated_dir, image_cache_file, path_parts=[]):
     """Recorre de forma recursiva una carpeta de Google Drive, con soporte para .docx."""
@@ -125,8 +126,8 @@ def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_
             safe_name = item_name.replace(" ", "-").replace("/", "-").lower()
             if safe_name.endswith('.docx'):
                 safe_name = safe_name.replace('.docx', '')
-            if safe_name.endswith('_en'):
-                safe_name = safe_name[:-3]
+            if "_en_" in safe_name:
+                safe_name = safe_name.split("_en_")[0]
             
             mdx_path = os.path.join(doc_path, f"{safe_name}.mdx")
             img_subfolder = "/".join(path_parts + [safe_name])
@@ -141,19 +142,22 @@ def process_drive_folder(service, folder_id, output_docs_dir, output_static_img_
                 first_img_url = get_first_image_url(html_data)
                 
                 # --- INICIO DE LA MODIFICACIÓN ---
-                relative_image_path = 'default_thumbnail.png' # Imagen por defecto (debe estar en static/img/)
+                relative_image_path = '/img/default_thumbnail.png' # Imagen por defecto (debe estar en static/img/)
                 if first_img_url:
                     img_hash = abs(hash(first_img_url)) % (10**8)
                     img_name = f"img_{img_hash}.png"
                     local_img_path = os.path.join(output_static_img_dir, img_subfolder, img_name)
-                    if download_image_utility(first_img_url, local_img_path):
-                        # Se guarda solo la ruta relativa, sin el '/img/'
-                        relative_image_path = f"{img_subfolder}/{img_name}"
+                    download_image_utility(first_img_url, local_img_path)
+                    relative_image_path = f"/img/{img_subfolder}/{img_name}"
 
                 # Se formatea la fecha a YYYY-MM-DD
                 date_iso = datetime.fromisoformat(item['modifiedTime'].replace("Z", "+00:00"))
                 formatted_date = date_iso.strftime('%Y-%m-%d')
-                item_title = item_name if item_lang == 'es' else item_name[:-3]
+                if item_lang == "es":
+                    item_title = item_name
+                else:
+                    parts = item_name.split("_en_", 1)
+                    item_title = parts[1] if len(parts) > 1 else item_name
                         
                 frontmatter = f"""---
 title: "{item_title}"

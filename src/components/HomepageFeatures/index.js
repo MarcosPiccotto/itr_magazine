@@ -6,15 +6,12 @@ import styles from './styles.module.css'; // Asegúrate de tener un archivo de e
 
 // --- Componente de Tarjeta Individual ---
 function Card({ title, image, description, link }) {
+    const imgSrc = image || '/img/default_thumbnail.png';
     return (
         <div className={clsx('col col--4')}>
             <div className={styles.card}>
                 {/* Usamos require() para que Docusaurus maneje la imagen */}
-                {image ?
-                <img src={require(`@site/static/img/${image}`).default}alt={title} className={styles.cardImage} />
-                :
-                <img src="/img/fondo_principal.png" alt={title} className={styles.cardImage} />
-                }
+                <img src={imgSrc} alt={title} className={styles.cardImage} />
                 <div className={styles.cardBody}>
                     <h3>{title}</h3>
                     <p>{description}</p>
