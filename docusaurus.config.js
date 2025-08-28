@@ -4,14 +4,15 @@
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
-import {themes as prismThemes} from 'prism-react-renderer';
+import { themes as prismThemes } from 'prism-react-renderer';
+
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Revista ITR',
-  tagline: 'Todos los proyectos que van del año',
+  tagline: '“El talento de nuestros estudiantes, en un solo lugar”',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -37,8 +38,8 @@ const config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en','es'],
+    defaultLocale: 'es',
+    locales: ['es', 'en'],
   },
 
   presets: [
@@ -67,6 +68,10 @@ const config = {
     ],
   ],
 
+  plugins: [
+    require.resolve('./plugins/docs-global-data'), // <-- VERIFICA ESTA LÍNEA
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -76,8 +81,8 @@ const config = {
         title: 'Revista ITR',
         logo: {
           alt: 'Revista ITR Logo',
-          src: 'img/logoW.svg',     // light mode
-          srcDark: 'img/logoB.svg',
+          src: 'img/logo_renault.svg',     // light mode
+          srcDark: 'img/logo_renault_amarillo.svg',
         },
         items: [
           {
@@ -86,14 +91,32 @@ const config = {
             position: 'left',
             label: 'Publicaciones',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          { to: '/blog', label: 'Blog', position: 'left' },
+          { to: '/blog', label: 'Proyecto', position: 'left' },
+          {
+            type: 'localeDropdown',
+            position: 'right'
+          },
           {
             href: 'https://github.com/MarcosPiccotto/itr_magazine ',
             label: 'GitHub',
             position: 'right',
           },
         ],
+      },
+
+      footer: {
+        style: 'dark',
+        copyright: `
+          <div style="text-align: center; ">
+            <p>© 2025 Colegio ITR | Revista Digital</p>
+            <p style="font-size: 0.875rem;">Hecho con ❤ por estudiantes y docentes</p>
+            <div> <img src="/img/logoblanco.png" alt="Logo Renault" style="width: 100px; height: auto;" /></div>
+          </div>
+        `,
       }
+
+
       // ,
       // footer: {
       //   style: 'dark',

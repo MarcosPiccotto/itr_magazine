@@ -1,64 +1,58 @@
+import React from 'react';
 import clsx from 'clsx';
-import Heading from '@theme/Heading';
-import styles from './styles.module.css';
+import Link from '@docusaurus/Link';
+import { usePluginData } from '@docusaurus/useGlobalData';
+import styles from './styles.module.css'; // Asegúrate de tener un archivo de estilos o ajústalo
 
-const FeatureList = [
-  {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-    description: (
-      <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
-      </>
-    ),
-  },
-  {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-    description: (
-      <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
-      </>
-    ),
-  },
-  {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
-    description: (
-      <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
-      </>
-    ),
-  },
-];
-
-function Feature({Svg, title, description}) {
-  return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as="h3">{title}</Heading>
-        <p>{description}</p>
-      </div>
-    </div>
-  );
+// --- Componente de Tarjeta Individual ---
+function Card({ title, image, description, link }) {
+    const imgSrc = image || '/img/default_thumbnail.png';
+    return (
+        <div className={clsx('col col--4')}>
+            <div className={styles.card}>
+                {/* Usamos require() para que Docusaurus maneje la imagen */}
+                <img src={imgSrc} alt={title} className={styles.cardImage} />
+                <div className={styles.cardBody}>
+                    <h3>{title}</h3>
+                    <p>{description}</p>
+                    {/* Es mejor usar Link para la navegación interna */}
+                    <Link to={link} className={styles.cardButton}>Ver más</Link>
+                </div>
+            </div>
+        </div>
+    );
 }
 
-export default function HomepageFeatures() {
-  return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+// --- Componente Principal que Muestra las Tarjetas ---
+export default function PublicationCards() {
+    const latestDocs = usePluginData('docusaurus-plugin-docs-global-data');
+
+    if (!latestDocs || latestDocs.length === 0) {
+        return (
+            <section style={{ textAlign: 'center', padding: '4rem 0' }}>
+                <h2>Últimas Publicaciones</h2>
+                <p>No se encontraron publicaciones recientes.</p>
+            </section>
+        );
+    }
+
+    return (
+        <section className={styles.features}>
+            <div className="container">
+                <div className="row">
+                    {latestDocs.map((doc) => {
+                        console.log(doc)
+                        return <Card
+                            key={doc.permalink}
+                            title={doc.title}
+                            description={doc.description}
+                            image={doc.image}
+                            link={doc.permalink}
+                        />
+                    }
+                    )}
+                </div>
+            </div>
+        </section>
+    );
 }

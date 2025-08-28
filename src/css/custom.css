@@ -5,7 +5,7 @@
  */
 
 /* You can override the default Infima variables here. */
-:root {
+/* :root {
   --ifm-color-primary: #2e8555;
   --ifm-color-primary-dark: #29784c;
   --ifm-color-primary-darker: #277148;
@@ -18,7 +18,7 @@
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
+/* [data-theme='dark'] {
   --ifm-color-primary: #25c2a0;
   --ifm-color-primary-dark: #21af90;
   --ifm-color-primary-darker: #1fa588;
@@ -27,4 +27,112 @@
   --ifm-color-primary-lighter: #32d8b4;
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+} */ 
+
+
+:root {
+  /* Paleta Renault - Modo Claro */
+  --ifm-color-primary: #20232e;
+  --ifm-color-primary-dark: #e6bc00;
+  --ifm-color-primary-darker: #cca600;
+  --ifm-color-primary-darkest: #b38f00;
+  --ifm-color-primary-light: #20232e;
+  --ifm-color-primary-lighter: #20232e;
+  --ifm-color-primary-lightest: #fff0b3;
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* Paleta Renault - Modo Oscuro */
+[data-theme='dark'] {
+  --ifm-color-primary: #FFEB70;
+  --ifm-color-primary-dark: #e6d264;
+  --ifm-color-primary-darker: #ccb859;
+  --ifm-color-primary-darkest: #b39e4d;
+  --ifm-color-primary-light: #fff184;
+  --ifm-color-primary-lighter: #fff59c;
+  --ifm-color-primary-lightest: #fff9cc;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.1);
+}
+
+/* 🎨 Hero Renault */
+.heroBanner {
+  background-image: url('/img/fondo_principal.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #fff;
+  text-align: center;
+  padding: 6rem 2rem;
+}
+
+[data-theme='dark'] .heroBanner {
+  position: relative; /* Necesario para que ::before se ubique relativo al contenedor */
+  background-image: url('/img/fondo_principal.png');
+  background-size: cover;
+  background-position: center;
+}
+
+[data-theme='dark'] .heroBanner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 200, 0, 0.4); /* Amarillo suave con transparencia */
+  pointer-events: none; /* Para no bloquear clics */
+  z-index: 1;
+}
+
+[data-theme='dark'] .heroBanner > * {
+  position: relative;
+  z-index: 2; /* Para que el texto quede arriba del overlay */
+}
+
+
+/* Hero título 
+.heroBanner h1,
+.heroBanner h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FFD100;
+  text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+}
+
+/* Hero subtítulo */
+.heroBanner p {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-top: 1rem;
+}
+
+/* Botones estilo Renault */
+.button--primary {
+  background-color: #FFD100;
+  border: none;
+  color: #000;
+  font-weight: 600;
+}
+
+.button--primary:hover {
+  background-color: #e6bc00;
+  color: #000;
+}
+.footer {
+  padding-top: 8px !important;
+  padding-bottom: 4px !important;
+}
+
+/*.footer {
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 600; /* un poquito más gruesa */
+  font-size: 1.3rem; /* ajustá si querés más grande/chico *//*
+}*/
+
+.hero__title {
+    font-size: 3rem;
+    font-family: 'Poppins';
+    
 }
