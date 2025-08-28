@@ -111,7 +111,7 @@ const config = {
           <div style="text-align: center; ">
             <p>© 2025 Colegio ITR | Revista Digital</p>
             <p style="font-size: 0.875rem;">Hecho con ❤ por estudiantes y docentes</p>
-            <div> <img src="/img/logoITR.png" alt="Logo Renault" style="width: 100px; height: auto;" /></div>
+            <div> <img src="/img/logoblanco.png" alt="Logo Renault" style="width: 100px; height: auto;" /></div>
           </div>
         `,
       }
