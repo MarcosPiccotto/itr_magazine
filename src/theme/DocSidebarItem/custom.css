@@ -1,0 +1,15 @@
+.download-btn {
+    margin-left: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.download-btn:hover {
+    transform: scale(1.2);
+    color: #2563eb;
+    /* azul lindo, podés cambiarlo */
+}
